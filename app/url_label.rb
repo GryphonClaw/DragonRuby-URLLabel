@@ -3,6 +3,10 @@ class URLLabel
   attr_accessor :r, :g, :b, :a
   attr_accessor :font, :size_px, :anchor_x, :anchor_y
 
+  @@white_color = {r: 255, g: 255, b: 255}
+  @@black_color = {r: 0, g: 0, b: 0}
+  @@tooltip_bg_color = {r: 255, g: 255, b: 202}
+
   def initialize(position: {x: 0, y: 58}, url: "", text: "", title: "", underline: false, colors: {hover: {}, normal: {}, visited: {}}, font: "", size_enum: 0)
     @x = position.x
     @y = position.y
@@ -16,6 +20,8 @@ class URLLabel
       @title = url
     end
 
+    @title_display_delay = 120
+
     @url = url
 
     @bounds_size = {w: 0, h: 0}
@@ -26,6 +32,7 @@ class URLLabel
     @last_hover_time = 0
     @show_title = false
     @last_mouse_position = {x: 0, y: 0}
+
   end
 
   def size_enum=(new_value)
@@ -48,7 +55,7 @@ class URLLabel
     if args.inputs.mouse.inside_rect?(bounds)
       cursor = "hand"
       @r = 255
-      if (args.tick_count - @last_hover_time > 120) && !@title.empty?
+      if (args.tick_count - @last_hover_time > @title_display_delay) && !@title.empty?
         @last_hover_time = args.tick_count
 
         @show_title = true
@@ -69,6 +76,7 @@ class URLLabel
     else
       args.gtk.set_system_cursor(cursor)
       @r = 0
+      @show_title = false
     end
 
     if @show_title
@@ -76,13 +84,26 @@ class URLLabel
         @show_title = false
       end
 
-      args.outputs.labels << {
-        x: @x, y: @y + bounds.h, text: @title
-      }
+      #tooltip / title
+      args.outputs.primitives << tooltip(args)
     end
-
   end
 
+  def tooltip(args)
+    x_pos = @x - 3
+    y_pos = @y + 3
+    tooltip_size = {w: 0, h: 0}
+    tooltip_size.w, tooltip_size.h = args.gtk.calcstringbox(@title, -3, "")
+    text_y_pos = (@y + bounds.h) - (tooltip_size.h / 2)
+    [
+      {x: x_pos, y: y_pos, w: tooltip_size.w + 6, h: tooltip_size.h + 6, primitive_marker: :solid}.merge(@@tooltip_bg_color),
+      {x: x_pos, y: y_pos, w: tooltip_size.w + 6, h: tooltip_size.h + 6, primitive_marker: :border}.merge(@@black_color),
+      #white lines to 
+      {x: x_pos, y:  (y_pos + tooltip_size.h) + 3, x2: (@x + tooltip_size.w) + 1, y2: (y_pos + tooltip_size.h) + 3, primitive_marker: :line}.merge(@@white_color),
+      {x: x_pos, y:  (y_pos - 2), x2: (@x - 3), y2: (y_pos + tooltip_size.h) + 3, primitive_marker: :line}.merge(@@white_color),
+      {x: x_pos + 3, y: text_y_pos, text: @title, vertical_alignment_enum: 2,size_enum: -3, primitive_marker: :label}
+    ]
+  end
   def primitive_marker
     :label
   end

@@ -20,4 +20,11 @@ The hand cursor is only shown on the first label to have a "tick", I supsect tha
 Not yet implemented, the current color of the text when hovered is red. eventually this should/will be a parameter when creating the label.
 
 ### Bounds
-The bounds of the label aren't recalculated when the following properties are modified: 
+The bounds of the label aren't recalculated when the following properties are modified:
+    * size_enum
+    * size_px
+    * vertical_alignment_enum
+    * alignment_enum
+    * font
+    * anchor_x
+    * anchor_y

@@ -6,6 +6,7 @@ def tick args
     x: 5, y: 718, text: "DragonRuby Version: #{$gtk.version}", size_enum: -3
   }
 
+  args.outputs.background_color = [128, 128, 128]
   args.state.url_label  ||= URLLabel.new(url: "https://www.gryphonclaw.net", text: "GryphonClaw Website", title: "This is a title", size_enum: 0)
   args.state.url_label2 ||= URLLabel.new(url: "https://www.dragonruby.org", text: "DragonRuby Website", title: "", size_enum: 5)
   args.state.url_label3 ||= URLLabel.new(url: "https://www.gryphonclaw.net", text: "This label shows the url because of blank title", title: "", size_enum: 8)
