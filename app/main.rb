@@ -16,6 +16,9 @@ def tick args
   my_label.size_enum = 8
   my_label.x = 20
   my_label.y = 100
+  puts "========================================"
+  puts my_label
+
 
   my_label = args.state.url_label2
   my_label.size_enum = 5

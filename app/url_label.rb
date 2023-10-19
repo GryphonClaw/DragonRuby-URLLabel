@@ -13,7 +13,7 @@ class URLLabel
     @text = text
     @font = font
     @size_enum = size_enum
-
+    @size_px = size_enum_to_px()
     if !title.empty?
       @title = title
     else
@@ -33,13 +33,32 @@ class URLLabel
     @show_title = false
     @last_mouse_position = {x: 0, y: 0}
 
+    @vertical_offset = 0
+
+    calc_bounds()
+    calc_vertical_offset()
   end
+
+  # def y()
+  #   @y + @vertical_offset
+  # end
 
   def size_enum=(new_value)
     #dont do any calulations if the value is the same as what we have cached
     return if @size_enum == new_value
     @size_enum = new_value
-    @bounds_size.w, @bounds_size.h = $gtk.calcstringbox(@text, @size_enum, @font)
+    #@bounds_size.w, @bounds_size.h = $gtk.calcstringbox(@text, @size_enum, @font)
+    calc_bounds()
+    calc_vertical_offset()
+  end
+
+  def vertical_alignment_enum=(new_value)
+    #dont do any calulations if the value is the same as what we have cached
+    return if @vertical_alignment_enum == new_value
+    @vertical_alignment_enum = new_value
+
+    calc_bounds()
+    calc_vertical_offset()
   end
 
   def bounds
@@ -89,6 +108,23 @@ class URLLabel
     end
   end
 
+  def size_enum_to_px
+    (22 + (@size_enum * 2))
+  end
+
+  def size_px_to_enum
+    size_px = size_enum_to_px()
+    (size_px / 22).foor()
+  end
+
+  def calc_bounds()
+    @bounds_size.w, @bounds_size.h = $gtk.calcstringbox(@text, @size_enum, @font)
+  end
+
+  def calc_vertical_offset()
+    @vertical_offset = @vertical_alignment_enum * (@bounds_size.h / 2)
+  end
+
   def tooltip(args)
     x_pos = @x - 3
     y_pos = @y + 3
@@ -109,7 +145,7 @@ class URLLabel
   end
 
   def serialize
-    {x: @x, y: @y, text: @text }
+    {x: @x, y: @y + vertical_offset, text: @text, vertical_alignment_enum: @vertical_alignment_enum, size_enum: @size_enum, size_px: @size_px }
   end
 
   def inspect
