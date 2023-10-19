@@ -7,7 +7,7 @@ class URLLabel
   @@black_color = {r: 0, g: 0, b: 0}
   @@tooltip_bg_color = {r: 255, g: 255, b: 202}
 
-  def initialize(position: {x: 0, y: 58}, url: "", text: "", title: "", underline: false, colors: {hover: {}, normal: {}, visited: {}}, font: "", size_enum: 0)
+  def initialize(position: {x: 0, y: 58}, url: "", text: "", title: "", underline: false, colors: {hover: {}, normal: {}, visited: {}}, font: "", size_enum: 0, alignment: {vertical: 2, horizontal: 0})
     @x = position.x
     @y = position.y
     @text = text
@@ -27,36 +27,35 @@ class URLLabel
     @bounds_size = {w: 0, h: 0}
     @bounds_size.w, @bounds_size.h = $gtk.calcstringbox(@text, @size_enum, @font)
 
-    @vertical_alignment_enum = 2
+    @vertical_alignment_enum = alignment.vertical
+    @alignment_enum = alignment.horizontal
 
     @last_hover_time = 0
     @show_title = false
     @last_mouse_position = {x: 0, y: 0}
 
-    @vertical_offset = 0
-
+    @bounds_offset = {x: 0, y: 0}
     calc_bounds()
     calc_vertical_offset()
   end
 
-  # def y()
-  #   @y + @vertical_offset
-  # end
-
   def size_enum=(new_value)
     #dont do any calulations if the value is the same as what we have cached
-    return if @size_enum == new_value
+    # return if @size_enum == new_value
     @size_enum = new_value
     #@bounds_size.w, @bounds_size.h = $gtk.calcstringbox(@text, @size_enum, @font)
+    # puts "size enum changed, recalculate bounds and offset"
+
     calc_bounds()
     calc_vertical_offset()
   end
 
   def vertical_alignment_enum=(new_value)
     #dont do any calulations if the value is the same as what we have cached
-    return if @vertical_alignment_enum == new_value
+    # return if @vertical_alignment_enum == new_value
     @vertical_alignment_enum = new_value
 
+    # puts "vertical alignment changed, recalculate bounds and offset"
     calc_bounds()
     calc_vertical_offset()
   end
@@ -66,7 +65,7 @@ class URLLabel
     #size_enum, size_px
     #vertical_alignment_enum, alignment_enum
     #font, anchor_x, anchor_y
-    {x: @x, y: @y - @bounds_size.h, **@bounds_size}
+    {x: (@x + @bounds_offset.x), y: (@y + @bounds_offset.y), **@bounds_size}
   end
 
   def tick(args)
@@ -91,7 +90,6 @@ class URLLabel
         args.gtk.openurl @url
       end
       args.gtk.set_system_cursor(cursor)
-      
     else
       args.gtk.set_system_cursor(cursor)
       @r = 0
@@ -105,7 +103,10 @@ class URLLabel
 
       #tooltip / title
       args.outputs.primitives << tooltip(args)
+
     end
+    #for debugging show the bounds as a border
+    args.outputs.borders << bounds
   end
 
   def size_enum_to_px
@@ -114,15 +115,24 @@ class URLLabel
 
   def size_px_to_enum
     size_px = size_enum_to_px()
-    (size_px / 22).foor()
+    (size_px / 22)
   end
 
   def calc_bounds()
+    # puts @size_enum
     @bounds_size.w, @bounds_size.h = $gtk.calcstringbox(@text, @size_enum, @font)
   end
 
   def calc_vertical_offset()
-    @vertical_offset = @vertical_alignment_enum * (@bounds_size.h / 2)
+    ## 0 is bottom, 1 is middle, 2 is top
+    case @vertical_alignment_enum
+    when 0
+      @bounds_offset.y = 0
+    when 1
+      @bounds_offset.y = -(@bounds_size.h / 2)
+    else
+      @bounds_offset.y = -@bounds_size.h #size_enum_to_px()
+    end
   end
 
   def tooltip(args)
@@ -145,7 +155,7 @@ class URLLabel
   end
 
   def serialize
-    {x: @x, y: @y + vertical_offset, text: @text, vertical_alignment_enum: @vertical_alignment_enum, size_enum: @size_enum, size_px: @size_px }
+    {x: @x + @bounds_offset.x, y: @y + @bounds_offset.y, x_pos: @x, y_pos: @y, text: @text, vertical_alignment_enum: @vertical_alignment_enum, size_enum: @size_enum, size_px: @size_px, primitive_marker: primitive_marker, bounds_offset: @bounds_offset, url: @url, title: @title }
   end
 
   def inspect
